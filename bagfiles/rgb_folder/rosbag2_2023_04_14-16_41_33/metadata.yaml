@@ -1,0 +1,19 @@
+rosbag2_bagfile_information:
+  version: 4
+  storage_identifier: sqlite3
+  relative_file_paths:
+    - rosbag2_2023_04_14-16_41_33_0.db3
+  duration:
+    nanoseconds: 10799330666
+  starting_time:
+    nanoseconds_since_epoch: 1681504893915764878
+  message_count: 215
+  topics_with_message_count:
+    - topic_metadata:
+        name: /color/preview/image
+        type: sensor_msgs/msg/Image
+        serialization_format: cdr
+        offered_qos_profiles: ""
+      message_count: 215
+  compression_format: ""
+  compression_mode: ""
