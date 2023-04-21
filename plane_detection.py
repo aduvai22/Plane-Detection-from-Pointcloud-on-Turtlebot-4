@@ -33,9 +33,10 @@ rgb = cv2.resize(rgb, (640,480), interpolation = cv2.INTER_AREA)
 rgb_img = o3d.geometry.Image(rgb)
 gray = cv2.cvtColor(rgb, cv2.COLOR_BGR2GRAY)
 gray_img = o3d.geometry.Image(gray)
-
+plt.imshow(rgb)
+# plt.show()
 depth_folder = './bagfiles/depth_folder/'
-depth_file = 'rosbag2_2023_04_14-17_38_37'
+depth_file = 'rosbag2_2023_04_14-16_28_49'
 # 'rosbag2_2023_04_12-18_02_49'
 # 'rosbag2_2023_04_14-16_28_49'
 # 'rosbag2_2023_04_14-16_41_48'
@@ -57,7 +58,6 @@ f_depth = np.frombuffer(depth_msg.data, dtype=np.uint16)
 f_depth = f_depth.reshape(480,640)
 depth_img = o3d.geometry.Image(f_depth)
 rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(rgb_img, depth_img, convert_rgb_to_intensity=True)
-print(rgbd)
 
 cam = o3d.camera.PinholeCameraIntrinsic()
 cam.intrinsic_matrix =  [[989.7, 0.00, 320.1] , [0.00, 747.9, 281.1], [0.00, 0.00, 1.00]]
