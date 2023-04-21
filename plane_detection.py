@@ -59,24 +59,14 @@ depth_img = o3d.geometry.Image(f_depth)
 rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(rgb_img, depth_img, convert_rgb_to_intensity=True)
 print(rgbd)
 
-pcd = o3d.geometry.PointCloud.create_from_rgbd_image(
-    rgbd,
-    o3d.camera.PinholeCameraIntrinsic(
-        o3d.camera.PinholeCameraIntrinsicParameters.PrimeSenseDefault))
+cam = o3d.camera.PinholeCameraIntrinsic()
+cam.intrinsic_matrix =  [[989.7, 0.00, 320.1] , [0.00, 747.9, 281.1], [0.00, 0.00, 1.00]]
+# cam.extrinsic = np.array([[0., 0., 0., 0.], [0., 0., 0., 0.], [0., 0., 0., 0.], [0., 0., 0., 1.]])
 
-print(o3d.camera.PinholeCameraIntrinsicParameters.PrimeSenseDefault)
+pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, cam)
+
 plane_model, inliers = pcd.segment_plane(distance_threshold=0.01, ransac_n=3, num_iterations=1000)
-[a, b, c, d] = plane_model
-x = np.linspace(-1,1,10)
-y = np.linspace(-1,1,10)
 
-X,Y = np.meshgrid(x,y)
-Z = (d - a*X - b*Y) / c
-
-fig = plt.figure()
-ax = fig.add_subplot(projection='3d')
-
-surf = ax.plot_surface(X, Y, Z)
 # Flip it, otherwise the pointcloud will be upside down
 pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
 
@@ -95,42 +85,27 @@ elif pcd.has_normals():
 else:
     geometry.paint_uniform_color((1.0, 0.0, 0.0))
     colors = np.asarray(geometry.colors)
-print(colors.shape)
-
-# Single View
-# plt.figure(figsize=(15, 15))
-# ax = plt.axes(projection='3d')
-# # ax.view_init(90, -90)
-# ax.axis("off")
-# ax.scatter(xyz[:,0], xyz[:,1], xyz[:,2], s=0.05, c=colors)
-# plt.show()
 
 segment_models={}
 segments={}
-max_plane_idx=4
+max_plane_idx=5
 rest=pcd
+fig = plt.figure()
+ax = fig.add_subplot(111,projection='3d')
 for i in range(max_plane_idx):
     colors = plt.get_cmap("tab20")(i)
-    segment_models[i], inliers = rest.segment_plane(distance_threshold=0.05,ransac_n=3,num_iterations=1000)
+    segment_models[i], inliers = rest.segment_plane(distance_threshold=0.08,ransac_n=3,num_iterations=1000)
     segments[i]=rest.select_by_index(inliers)
     segments[i].paint_uniform_color(list(colors[:3]))
     rest = rest.select_by_index(inliers, invert=True)
     print("pass",i,"/",max_plane_idx,"done.")
     [a, b, c, d] = segment_models[i]  
     print(a,b,c,d)
-    x = np.linspace(-1,50,100)
-    y = np.linspace(-1,50,100)
+    x = np.linspace(-10,10,100)
+    y = np.linspace(-10,10,100)
 
     X,Y = np.meshgrid(x,y)
     Z = (d - a*X - b*Y) / c
-
-    # fig = plt.figure()
-    # ax = fig.add_subplot(projection='3d')
-
-    # surf = ax.plot_surface(X, Y, Z)
-    ax = plt.axes(projection='3d')
-# # ax.view_init(90, -90)
-# ax.axis("off")
-    ax.scatter(X, Y, Z, s=0.05, c=colors) 
+    ax.view_init(45, -45)
+    ax.plot_surface(X, Y, Z, alpha=0.75)
 plt.show()
-# print(segment_models)
