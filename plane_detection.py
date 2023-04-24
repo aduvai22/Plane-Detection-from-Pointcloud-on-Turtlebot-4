@@ -9,7 +9,7 @@ from rosbags.serde import deserialize_cdr
 
 #create paths and load data
 rgb_folder = './bagfiles/rgb_folder/'
-rgb_file = 'rosbag2_2023_04_14-17_38_27'
+rgb_file = 'rosbag2_2023_04_14-16_41_33'
 # 'rosbag2_2023_04_12-17_57_22'
 # 'rosbag2_2023_04_14-16_28_36'
 # 'rosbag2_2023_04_14-16_41_33'
@@ -36,7 +36,7 @@ gray_img = o3d.geometry.Image(gray)
 plt.imshow(rgb)
 # plt.show()
 depth_folder = './bagfiles/depth_folder/'
-depth_file = 'rosbag2_2023_04_14-16_28_49'
+depth_file = 'rosbag2_2023_04_14-16_41_48'
 # 'rosbag2_2023_04_12-18_02_49'
 # 'rosbag2_2023_04_14-16_28_49'
 # 'rosbag2_2023_04_14-16_41_48'
@@ -65,7 +65,7 @@ cam.intrinsic_matrix =  [[989.7, 0.00, 320.1] , [0.00, 747.9, 281.1], [0.00, 0.0
 
 pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, cam)
 
-plane_model, inliers = pcd.segment_plane(distance_threshold=0.01, ransac_n=3, num_iterations=1000)
+plane_model, inliers = pcd.segment_plane(distance_threshold=0.01, ransac_n=5, num_iterations=1000)
 
 # Flip it, otherwise the pointcloud will be upside down
 pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
@@ -88,13 +88,13 @@ else:
 
 segment_models={}
 segments={}
-max_plane_idx=5
+max_plane_idx=20
 rest=pcd
 fig = plt.figure()
 ax = fig.add_subplot(111,projection='3d')
 for i in range(max_plane_idx):
     colors = plt.get_cmap("tab20")(i)
-    segment_models[i], inliers = rest.segment_plane(distance_threshold=0.08,ransac_n=3,num_iterations=1000)
+    segment_models[i], inliers = rest.segment_plane(distance_threshold=1e-10,ransac_n=3,num_iterations=1000)
     segments[i]=rest.select_by_index(inliers)
     segments[i].paint_uniform_color(list(colors[:3]))
     rest = rest.select_by_index(inliers, invert=True)
