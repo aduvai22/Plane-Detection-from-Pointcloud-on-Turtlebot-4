@@ -59,6 +59,14 @@ f_depth = f_depth.reshape(480,640)
 depth_img = o3d.geometry.Image(f_depth)
 rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(rgb_img, depth_img, convert_rgb_to_intensity=True)
 
+plt.subplot(1, 2, 1)
+plt.title('Grayscale image')
+plt.imshow(rgbd.color)
+plt.subplot(1, 2, 2)
+plt.title('Depth image')
+plt.imshow(rgbd.depth)
+plt.show()
+
 cam = o3d.camera.PinholeCameraIntrinsic()
 cam.intrinsic_matrix =  [[989.7, 0.00, 320.1] , [0.00, 747.9, 281.1], [0.00, 0.00, 1.00]]
 # cam.extrinsic = np.array([[0., 0., 0., 0.], [0., 0., 0., 0.], [0., 0., 0., 0.], [0., 0., 0., 1.]])

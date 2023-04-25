@@ -16,6 +16,9 @@ from utils_rgbd.lib_open3d import wrap_open3d_point_cloud_with_my_functions
 from utils_rgbd.lib_plot_rgbd import drawMaskFrom2dPoints, draw3dArrowOnImage
 wrap_open3d_point_cloud_with_my_functions()
 
+from rosbags.rosbag2 import Reader
+from rosbags.serde import deserialize_cdr
+
 MAX_OF_MAX_PLANE_NUMBERS = 5
 
 
@@ -313,18 +316,91 @@ def calc_opposite_point(p0, p1, length=5.0, to_int=True):
     return (x2, y2)
 
 
-def test_PlaneDetector():
+def test_PlaneDetector():    
 
+    #create paths and load data
+    rgb_folder = './bagfiles/rgb_folder/'
+    rgb_file = 'rosbag2_2023_04_12-17_57_22'
+    # 'rosbag2_2023_04_12-17_57_22'
+    # 'rosbag2_2023_04_14-16_28_36'
+    # 'rosbag2_2023_04_14-16_41_33'
+    # 'rosbag2_2023_04_14-16_40_18'
+
+    # create reader instance and open for reading
+    with Reader(rgb_folder+rgb_file) as reader:
+        # topic and msgtype information is available on .connections list
+        for connection in reader.connections:
+            print(connection.topic, connection.msgtype)
+
+        # iterate over messages
+        for connection, timestamp, rawdata in reader.messages():
+            if connection.topic == '/color/preview/image':
+                img_msg = deserialize_cdr(rawdata, connection.msgtype)
+    #             print(img_msg.header.frame_id)
+
+    rgb = img_msg.data.reshape(250,250,3)
+    rgb = cv2.cvtColor(rgb, cv2.COLOR_BGR2RGB)
+    rgb = cv2.resize(rgb, (640,480), interpolation = cv2.INTER_AREA)
+    rgb_img = open3d.geometry.Image(rgb)
+    gray = cv2.cvtColor(rgb, cv2.COLOR_BGR2GRAY)
+    gray_img = open3d.geometry.Image(gray)
+    # plt.imshow(rgb)
+    # plt.show()
+    depth_folder = './bagfiles/depth_folder/'
+    depth_file = 'rosbag2_2023_04_12-18_02_49'
+    # 'rosbag2_2023_04_12-18_02_49'
+    # 'rosbag2_2023_04_14-16_28_49'
+    # 'rosbag2_2023_04_14-16_41_48'
+    # 'rosbag2_2023_04_14-16_40_29'
+
+    # create reader instance and open for reading
+    with Reader(depth_folder+depth_file) as reader:
+        # topic and msgtype information is available on .connections list
+        for connection in reader.connections:
+            print(connection.topic, connection.msgtype)
+
+        # iterate over messages
+        for connection, timestamp, rawdata in reader.messages():
+            if connection.topic == '/stereo/depth':
+                depth_msg = deserialize_cdr(rawdata, connection.msgtype)
+    #             print(depth_msg.header.frame_id)
+
+    f_depth = np.frombuffer(depth_msg.data, dtype=np.uint16)
+    f_depth = f_depth.reshape(480,640)
+    depth_img = open3d.geometry.Image(f_depth)
+    rgbd = open3d.geometry.RGBDImage.create_from_color_and_depth(rgb_img, depth_img, convert_rgb_to_intensity=True)
+
+    # plt.subplot(1, 3, 1)
+    # plt.title('Grayscale image')
+    # plt.imshow(rgbd.color)
+    # plt.subplot(1, 3, 2)
+    # plt.title('Depth image')
+    # plt.imshow(rgbd.depth)
+    # plt.subplot(1, 3, 3)
+    # plt.title('Raw Depth image')
+    # plt.imshow(f_depth)
+    # plt.show()
     # -- Read color image and depth images
     img_color = cv2.imread("images/rgb3.png", cv2.IMREAD_UNCHANGED)
     img_depth = cv2.imread("images/depth2.png", cv2.IMREAD_UNCHANGED)
-    config_file = "plane_detector_config.yaml"
-    camera_info_file_path = "cam_params_realsense.json"
+    img_color = (255*np.asarray(rgbd.color)).astype(np.uint8)
+    img_depth = (255*np.asarray(rgbd.depth)).astype(np.uint8)
+    # plt.subplot(1, 2, 1)
+    # plt.title('Grayscale image')
+    # plt.imshow(img_color)
+    # plt.subplot(1, 2, 2)
+    # plt.title('Depth image')
+    # plt.imshow(img_depth)
+    # plt.show()
+    
+    
+    config_file = "config/plane_detector_config.yaml"
+    camera_info_file_path = "config/cam_params_realsense.json"
     detector = PlaneDetector(config_file, camera_info_file_path)
 
     # -- Detect planes.
     list_plane_params, planes_mask, planes_img_viz = detector.detect_planes(
-        img_depth, img_color)
+        f_depth, img_color)
 
     # -- Print result.
     for i, plane_param in enumerate(list_plane_params):
